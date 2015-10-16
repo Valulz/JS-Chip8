@@ -4,14 +4,14 @@ function Chip8Renderer(canvas, width, height, cellSize, fgColor, bgColor){
     fgColor = fgColor || '#f00';
     bgColor = bgColor || '#fff';
 
-    var context = canvas.getContext('2d');
+    var context2D = canvas.getContext('2d');
 
-
-    //add audio context
+    var contextAudio =  window.AudioContext && new AudioContext ||
+                        window.webkitAudioContext && new webkitAudioContext;
 
     return {
         clear : function clear(){
-            context.clearRect(0, 0, width * cellSize, height * cellSize );
+            context2D.clearRect(0, 0, width * cellSize, height * cellSize );
         },
         render : function render(display){
             this.clear();
@@ -21,11 +21,23 @@ function Chip8Renderer(canvas, width, height, cellSize, fgColor, bgColor){
                 x = (i % width) * cellSize;
                 y = Math.floor(i / width) * cellSize;
 
-                context.fillStyle = [bgColor, fgColor][display[i]];
-                context.fillRect(x, y, cellSize, cellSize);
-
+                context2D.fillStyle = [bgColor, fgColor][display[i]];
+                context2D.fillRect(x, y, cellSize, cellSize);
             }
-
+        },
+        beep: function beep(){
+            if(contextAudio){
+                var oscillator = contextAudio.createOscillator();
+                oscillator.connect(contextAudio.destination);
+                oscillator.type = 'square';
+                oscillator.start();
+                setTimeout(function () {
+                    oscillator.stop();
+                }, 100);
+            }
         }
     };
 }
+
+
+

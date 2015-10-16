@@ -141,7 +141,8 @@ var Chip8 = function Chip8(){
 
                 if (soundTimer > 0) {
                     if (soundTimer == 1) {
-                        console.log('BEEP');
+                        //console.log('BEEP');
+                        renderer.beep();
                     }
                     soundTimer--;
                 }

@@ -9,7 +9,7 @@ Chip8.setRenderer(renderer);
 
 var xhr = new XMLHttpRequest();
 //Test with PONG, later, try to implement a choice between multiple game.
-xhr.open('GET', 'public/roms/UFO', true);
+xhr.open('GET', 'public/roms/PONG2', true);
 xhr.responseType = 'arraybuffer';
 
 xhr.onload = function () {

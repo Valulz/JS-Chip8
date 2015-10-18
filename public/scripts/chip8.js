@@ -124,8 +124,14 @@ var Chip8 = function Chip8(){
             running = true;
             var self = this;
 
+            var lastLoop = new Date;
+
             requestAnimationFrame(function draw() {
-                for(var i = 0; i<15; i++){
+                var thisLoop = new Date;
+                document.getElementById('fps').innerHTML = (1000 / (thisLoop - lastLoop)) + '';
+                lastLoop = thisLoop;
+
+                for(var i = 0; i<16; i++){
                     if(running){
                         self.emulateCycle();
                     }
@@ -374,6 +380,7 @@ var Chip8 = function Chip8(){
                                 }
 
                                 display[(v[X] + x) + ((v[Y] + y) * 64)] ^= 1;
+
                             }
                         }
                     }

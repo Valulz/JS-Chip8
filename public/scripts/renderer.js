@@ -6,8 +6,15 @@ function Chip8Renderer(canvas, width, height, cellSize, fgColor, bgColor){
 
     var context2D = canvas.getContext('2d');
 
-    var contextAudio =  window.AudioContext && new AudioContext ||
-                        window.webkitAudioContext && new webkitAudioContext;
+    var contextAudio;
+
+    try{
+        window.AudioContext = window.AudioContext||window.webkitAudioContext;
+        contextAudio = new AudioContext();
+    } catch (e){
+        alert('Your browser does not support Web Audio API');
+    }
+
 
     return {
         clear : function clear(){
@@ -17,13 +24,15 @@ function Chip8Renderer(canvas, width, height, cellSize, fgColor, bgColor){
             this.clear();
             var x, y;
 
-            for(var i = 0, len = display.length; i<len; i++){
+            for (var i = 0; i < display.length; i++) {
                 x = (i % width) * cellSize;
                 y = Math.floor(i / width) * cellSize;
 
                 context2D.fillStyle = [bgColor, fgColor][display[i]];
                 context2D.fillRect(x, y, cellSize, cellSize);
             }
+
+
         },
         beep: function beep(){
             if(contextAudio){

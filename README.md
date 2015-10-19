@@ -1,2 +1,4 @@
 # JS-Chip8
-Emulateur Chip8 en Javascript
+
+*A Chip8 emulator written in Javascript*
+

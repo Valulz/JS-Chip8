@@ -1,4 +1,15 @@
-
+/**
+ * The Renderer of the Chip8 emulator
+ *
+ * @param canvas the canvas to draw on
+ * @param width width of the chip8
+ * @param height height of the chip8
+ * @param cellSize Size of a cell
+ * @param fgColor Foreground Color
+ * @param bgColor Background Color
+ * @returns {{clear: Function, render: Function, beep: Function}}
+ * @constructor
+ */
 function Chip8Renderer(canvas, width, height, cellSize, fgColor, bgColor){
 
     fgColor = fgColor || '#f00';
@@ -17,25 +28,27 @@ function Chip8Renderer(canvas, width, height, cellSize, fgColor, bgColor){
 
 
     return {
+
         clear : function clear(){
             context2D.clearRect(0, 0, width * cellSize, height * cellSize );
         },
+
         render : function render(display){
             this.clear();
             var x, y;
 
-            for (var i = 0; i < display.length; i++) {
+            for (var i = 0, len = display.length; i < len; i++) {
                 x = (i % width) * cellSize;
                 y = Math.floor(i / width) * cellSize;
 
                 context2D.fillStyle = [bgColor, fgColor][display[i]];
                 context2D.fillRect(x, y, cellSize, cellSize);
             }
-
-
         },
+
         beep: function beep(){
             if(contextAudio){
+
                 var oscillator = contextAudio.createOscillator();
                 oscillator.connect(contextAudio.destination);
                 oscillator.type = 'square';

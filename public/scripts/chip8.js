@@ -1,17 +1,43 @@
 /**
- * Created by Valentin on 13/10/2015.
+ * The Chip8 emulator object
+ *
+ * To realise this emulator I use :
+ * [http://blog.alexanderdickson.com/javascript-chip-8-emulator]{@tutorial create a Chip8 emulator}
+ * [http://devernay.free.fr/hacks/chip8/C8TECH10.HTM]{@link Chip8 technical reference}
  */
-
 var Chip8 = function Chip8(){
-    //PSEUDO-CONST
+
+    /**
+     * The address where the rom is loaded
+     * @type {number}
+     */
     var ROM_START = 0x200;
+
+    /**
+     * CHIP8 Memory size
+     * @type {number}
+     */
     var CHIP8_MEMORY = 0x1000;
+
+    /**
+     * Number of registers
+     * @type {number}
+     */
     var CHIP8_REGISTERS = 16;
+
+    /**
+     * Level of the stack
+     * @type {number}
+     */
     var CHIP8_STACK_LEVELS = 16;
+
     var CHIP8_WIDTH = 64;
     var CHIP8_HEIGHT = 32;
 
-    //FONT SET of the Chip8
+    /**
+     * FONT SET of the Chip8
+     * @type {number[]}
+     */
     var FONT_SET= [
         0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
         0x20, 0x60, 0x20, 0x20, 0x70, // 1
@@ -57,17 +83,40 @@ var Chip8 = function Chip8(){
     // Sound timer
     var soundTimer = null;
 
+    /**
+     * Store keys pressed
+     * @type {{}}
+     */
     var keys = {};
 
-    //var step = null;
+    /**
+     * Tell whether the program should run or not
+     * @type {boolean}
+     */
     var running = null;
 
+    /**
+     * Tells whether or not the emulator have to redraw the screen
+     * @type {boolean}
+     */
     var drawFlag = false;
 
+    /**
+     * Use to render the chip8 screen
+     */
     var rendererChip = null;
 
+    /**
+     * Reset the emulator
+     */
     function reset(){
-        var i, len;
+
+        var i;
+
+        /**
+         * Use as cache for array.length
+         */
+        var len;
 
         //reset memory
         for(i = 0, len = memory.length; i<len; i++) memory[i] = 0;
@@ -101,20 +150,44 @@ var Chip8 = function Chip8(){
     reset();
 
     return {
-        get getDisplayWidth(){ return CHIP8_WIDTH;},
-        get getDisplayHeight() { return CHIP8_HEIGHT;},
-        setRenderer : function (renderer) {
+
+        get getDisplayWidth(){
+            return CHIP8_WIDTH;
+        },
+
+        get getDisplayHeight() {
+            return CHIP8_HEIGHT;
+        },
+
+        setRenderer : function setRenderer(renderer) {
             rendererChip = renderer;
         },
-        setKey : function setKey(key) { keys[key] = true;
-            console.log(key); },
-        unsetKey : function unsetKey(key) {delete keys[key];},
+
+        /**
+         * Set the pressed key by the user
+         * @param key key pressed by user
+         */
+        setKey : function setKey(key) {
+            keys[key] = true;
+        },
+
+        /**
+         * Remove the key, not pressed anymore by the user
+         * @param key
+         */
+        unsetKey : function unsetKey(key) {
+            delete keys[key];
+        },
+
         loadProgram : function loadProgram(program){
+
             for(var i = 0, len = program.length; i<len; i++){
                 memory[ROM_START + i] = program[i];
             }
         },
+
         reset : reset,
+
         start : function () {
 
             if(rendererChip == null){
@@ -127,18 +200,20 @@ var Chip8 = function Chip8(){
             var lastLoop = new Date;
 
             requestAnimationFrame(function draw() {
+                //Refresh the FPS
                 var thisLoop = new Date;
                 document.getElementById('fps').innerHTML = (1000 / (thisLoop - lastLoop)) + '';
                 lastLoop = thisLoop;
 
+                //Emulate 16 cycle of the chip8
                 for(var i = 0; i<16; i++){
                     if(running){
                         self.emulateCycle();
                     }
                 }
 
+                //Redraw if necessary
                 if(drawFlag){
-                    //renderer redraw
                     rendererChip.render(display);
                     drawFlag = false;
                 }
@@ -147,8 +222,7 @@ var Chip8 = function Chip8(){
 
                 if (soundTimer > 0) {
                     if (soundTimer == 1) {
-                        //console.log('BEEP');
-                        renderer.beep();
+                        rendererChip.beep();
                     }
                     soundTimer--;
                 }
@@ -157,32 +231,42 @@ var Chip8 = function Chip8(){
             });
 
         },
+
         stop : function () {
             running = false;
         },
+
+        /**
+         * Emulate a cycle of the Chip8
+         * If you want more information about the Chip8, please, check out this link below :
+         * {@link} http://devernay.free.fr/hacks/chip8/C8TECH10.HTM
+         */
         emulateCycle: function emulateCycle(){
             var opCode = memory[pc] << 8 | memory[pc+1];
             var X = (opCode & 0x0F00) >> 8;
             var Y = (opCode & 0x00F0) >> 4;
 
-            console.log(opCode.toString(16).toUpperCase(), opCode);
+            //console.log(opCode.toString(16).toUpperCase(), opCode);
 
             pc += 2;
 
             switch(opCode & 0xF000){
+
                 case 0x0000 : {
 
                     switch(opCode){
+
+                        //clear the screen
                         case 0x00E0 : {
-                            //clear the screen
                             for(var i = 0, len=display.length; i<len; i++)
                                 display[i] = 0;
 
                             drawFlag = true;
                             break;
                         }
+
+                        //Return from a subroutine
                         case 0x00EE : {
-                            //Return from a subroutine
                             pc = stack[--sp];
                             break;
                         }
@@ -190,53 +274,52 @@ var Chip8 = function Chip8(){
                     break;
                 }
 
+                //Jump to address NNN
                 case 0x1000 : {
-                    //Jump to address NNN
                     pc = opCode & 0xFFF;
                     break;
                 }
 
+                //calls subroutine at NNN
                 case 0x2000 : {
-                    //calls subroutine at NNN
                     stack[sp] = pc;
                     sp ++;
                     pc = opCode & 0x0FFF;
                     break;
                 }
 
+                //Skips the next instruction if VX equals NN.
                 case 0x3000 : {
-                    //Skips the next instruction if VX equals NN.
                     if(v[X] === (opCode & 0x00FF)){
                         pc += 2;
                     }
                     break;
                 }
 
-
+                //Skips the next instruction if VX doesn't equal NN
                 case 0x4000 : {
-                    //Skips the next instruction if VX doesn't equal NN
                     if(v[X] != (opCode & 0x00FF)) {
                         pc += 2;
                     }
                     break;
                 }
 
+                //Skips the next instruction if VX equals VY.
                 case 0x5000 : {
-                    //Skips the next instruction if VX equals VY.
                     if(v[X] === v[Y]){
                         pc += 2;
                     }
                     break;
                 }
 
+                //Sets VX to NN.
                 case 0x6000 : {
-                    //Sets VX to NN.
                     v[X] = opCode & 0x00FF;
                     break;
                 }
 
+                //Adds NN to VX.
                 case 0x7000 : {
-                    //Adds NN to VX.
                     var val = (opCode & 0xFF) + v[X];
 
                     if (val > 255)
@@ -249,32 +332,33 @@ var Chip8 = function Chip8(){
                 case 0x8000 : {
 
                     switch (opCode & 0x000F){
+
+                        // Sets VX to the value of VY.
                         case 0x0000 : {
-                            // Sets VX to the value of VY.
                             v[X] = v[Y];
                             break;
                         }
 
+                        //Sets VX to VX or VY.
                         case 0x0001 : {
-                            //Sets VX to VX or VY.
                             v[X] |= v[Y];
                             break;
                         }
 
+                        //Sets VX to VX and VY.
                         case 0x0002 : {
-                            //Sets VX to VX and VY.
                             v[X] &= v[Y];
                             break;
                         }
 
+                        //Sets VX to VX xor VY.
                         case 0x0003 : {
-                            //Sets VX to VX xor VY.
                             v[X] ^= v[Y];
                             break;
                         }
 
+                        //Adds VY to VX. VF is set to 1 when there's a carry, and to 0 when there isn't.
                         case 0x0004 : {
-                            //Adds VY to VX. VF is set to 1 when there's a carry, and to 0 when there isn't.
                             v[X] += v[Y];
 
                             v[0xF] = +(v[X] > 255);
@@ -284,8 +368,8 @@ var Chip8 = function Chip8(){
                             break;
                         }
 
+                        //VY is subtracted from VX. VF is set to 0 when there's a borrow, and 1 when there isn't.
                         case 0x0005 : {
-                            //VY is subtracted from VX. VF is set to 0 when there's a borrow, and 1 when there isn't.
                             v[0xF] = +(v[X] > v[Y]);
                             v[X] -= v[Y];
                             if (v[X] < 0)
@@ -294,16 +378,16 @@ var Chip8 = function Chip8(){
                             break;
                         }
 
+                        //Shifts VX right by one. VF is set to the value of the least significant bit of VX before the shift.[2]
                         case 0x0006 : {
-                            //Shifts VX right by one. VF is set to the value of the least significant bit of VX before the shift.[2]
                             v[0xF] = v[X] & 0x1;
                             v[X] >>= 1;
 
                             break;
                         }
 
+                        //Sets VX to VY minus VX. VF is set to 0 when there's a borrow, and 1 when there isn't.
                         case 0x0007 : {
-                            //Sets VX to VY minus VX. VF is set to 0 when there's a borrow, and 1 when there isn't.
                             v[0xF] = +(v[Y] > v[X]);
                             v[X] = v[Y] - v[X];
                             if (v[X] < 0) {
@@ -313,8 +397,8 @@ var Chip8 = function Chip8(){
                             break;
                         }
 
+                        //Shifts VX left by one. VF is set to the value of the most significant bit of VX before the shift.[2]
                         case 0x000E : {
-                            //Shifts VX left by one. VF is set to the value of the most significant bit of VX before the shift.[2]
                             v[0xF] = +(v[X] & 0x80);
                             v[X] <<= 1;
                             if (v[X] > 255) {
@@ -328,8 +412,8 @@ var Chip8 = function Chip8(){
                     break;
                 }
 
+                //Skips the next instruction if VX doesn't equal VY.
                 case 0x9000 : {
-                    //Skips the next instruction if VX doesn't equal VY.
                     if(v[X] != v[Y]){
                         pc += 2;
                     }
@@ -337,34 +421,37 @@ var Chip8 = function Chip8(){
                     break;
                 }
 
+                //Sets I to the address NNN.
                 case 0xA000 : {
-                    //Sets I to the address NNN.
                     I = opCode & 0x0FFF;
 
                     break;
                 }
 
+                //Jumps to the address NNN plus V0.
                 case 0xB000: {
-                    //Jumps to the address NNN plus V0.
                     pc = (opCode & 0x0FFF) + v[0];
                     break;
                 }
 
+                //Sets VX to the result of a bitwise and operation on a random number and NN.
                 case 0xC000 : {
-                    //Sets VX to the result of a bitwise and operation on a random number and NN.
                     v[X] = Math.floor(Math.random() * 0x00FF) & (opCode & 0x00FF);
                     break;
                 }
 
+                /**
+                 * Sprites stored in memory at location in index register (I), 8bits wide. Wraps around the screen
+                 * If when drawn, clears a pixel, register VF is set to 1 otherwise it is zero.
+                 * All drawing is XOR drawing (i.e. it toggles the screen pixels).
+                 * Sprites are drawn starting at position VX, VY. N is the number of 8bit rows that need to be drawn
+                 * If N is greater than 1, second line continues at position VX, VY+1, and so on.
+                 */
                 case 0xD000 : {
-                    // Sprites stored in memory at location in index register (I), 8bits wide. Wraps around the screen
-                    // If when drawn, clears a pixel, register VF is set to 1 otherwise it is zero.
-                    // All drawing is XOR drawing (i.e. it toggles the screen pixels).
-                    // Sprites are drawn starting at position VX, VY. N is the number of 8bit rows that need to be drawn
-                    // If N is greater than 1, second line continues at position VX, VY+1, and so on.
 
                     var height = opCode & 0x000F;
                     var pixel = null;
+
                     v[0xF] = 0;
 
                     for(var y = 0; y<height; y++)
@@ -391,8 +478,9 @@ var Chip8 = function Chip8(){
 
                 case 0xE000 : {
                     switch (opCode & 0x00FF){
+
+                        //Skips the next instruction if the key stored in VX is pressed.
                         case 0x009E : {
-                            //Skips the next instruction if the key stored in VX is pressed.
                             if(keys[v[X]]) {
                                 pc += 2;
                             }
@@ -400,8 +488,8 @@ var Chip8 = function Chip8(){
                             break;
                         }
 
+                        //Skips the next instruction if the key stored in VX isn't pressed.
                         case 0x00A1 : {
-                            //Skips the next instruction if the key stored in VX isn't pressed.
                             if(!keys[v[X]]){
                                 pc += 2;
                             }
@@ -416,13 +504,15 @@ var Chip8 = function Chip8(){
 
                     switch (opCode & 0x00FF){
 
+                        //Sets VX to the value of the delay timer.
                         case 0x0007:{
-                            //Sets VX to the value of the delay timer.
                             v[X] = delayTimer;
                             break;
                         }
 
+                        //A key press is awaited, and then stored in VX.
                         case 0x000A :{
+
                             var oldKeySet = this.setKey;
                             var self = this;
 
@@ -431,7 +521,6 @@ var Chip8 = function Chip8(){
                                 self.setKey = oldKeySet.bind(self);
                                 self.setKey.apply(self, arguments);
 
-                                //start
                                 this.start();
                             };
 
@@ -439,33 +528,35 @@ var Chip8 = function Chip8(){
                             break;
                         }
 
+                        //Sets the delay timer to VX.
                         case 0x0015 :{
-                            //Sets the delay timer to VX.
                             delayTimer = v[X];
                             break;
                         }
 
+                        //Sets the sound timer to VX.
                         case 0x0018 :{
-                            //Sets the sound timer to VX.
                             soundTimer = v[X];
                             break;
                         }
 
+                        //Adds VX to I.
                         case 0x001E : {
-                            //Adds VX to I.[3]
                             I += v[X];
                             break;
                         }
 
+                        //Sets I to the location of the sprite for the character in VX. Characters 0-F (in hexadecimal) are represented by a 4x5 font.
                         case 0x0029 : {
-                            //Sets I to the location of the sprite for the character in VX. Characters 0-F (in hexadecimal) are represented by a 4x5 font.
                             I = v[X] * 5;
                             break;
                         }
 
+                        /*
+                        * Stores the Binary-coded decimal representation of VX, with the most significant of three digits at
+                        * the address in I, the middle digit at I plus 1, and the least significant digit at I plus 2.
+                        * */
                         case 0x0033 :{
-                            /* Stores the Binary-coded decimal representation of VX, with the most significant of three digits at
-                            the address in I, the middle digit at I plus 1, and the least significant digit at I plus 2. */
                             memory[I]   =  v[X] / 100;
                             memory[I+1] = (v[X] / 10 ) % 10;
                             memory[I+2] = (v[X] % 100) % 10;
@@ -473,16 +564,16 @@ var Chip8 = function Chip8(){
                             break;
                         }
 
+                        //Stores V0 to VX in memory starting at address I.[4]
                         case 0x0055 : {
-                            //Stores V0 to VX in memory starting at address I.[4]
                             for(i = 0; i<=X; i++){
                                 memory[I+i] = v[i];
                             }
                             break;
                         }
 
+                        //Fills V0 to VX with values from memory starting at address I.[4]
                         case 0x0065 : {
-                            //Fills V0 to VX with values from memory starting at address I.[4]
                             for(i = 0; i<=X; i++){
                                 v[i] = memory[I+i];
                             }
@@ -494,9 +585,7 @@ var Chip8 = function Chip8(){
 
                 default:
                     throw new Error('Unknown opCode ' + opCode.toString(16) + ' passed. Terminating.');
-
             }
         }
     };
-
 }();

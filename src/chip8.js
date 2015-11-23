@@ -161,7 +161,7 @@ function Chip8(){
 
         setRenderer : function setRenderer(renderer) {
             if((typeof renderer.clear == "function") &&
-                (typeof renderer.render == "function") &&)
+                (typeof renderer.render == "function") &&
                 (typeof renderer.beep == "function")){
                 rendererChip = renderer;
             }

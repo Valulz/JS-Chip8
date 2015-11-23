@@ -12,6 +12,9 @@
  */
 function Chip8Renderer(canvas, width, height, cellSize, fgColor, bgColor){
 
+    width = width || 64;
+    height = height || 32;
+    cellSize = cellSize || 10;
     fgColor = fgColor || '#f00';
     bgColor = bgColor || '#fff';
 
@@ -61,5 +64,4 @@ function Chip8Renderer(canvas, width, height, cellSize, fgColor, bgColor){
     };
 }
 
-
-
+module.exports = Chip8Renderer;

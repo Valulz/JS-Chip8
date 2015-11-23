@@ -5,40 +5,40 @@
  * [http://blog.alexanderdickson.com/javascript-chip-8-emulator]{@tutorial create a Chip8 emulator}
  * [http://devernay.free.fr/hacks/chip8/C8TECH10.HTM]{@link Chip8 technical reference}
  */
-var Chip8 = function Chip8(){
 
+function Chip8(){
     /**
      * The address where the rom is loaded
      * @type {number}
      */
-    var ROM_START = 0x200;
+    const ROM_START = 0x200;
 
     /**
      * CHIP8 Memory size
      * @type {number}
      */
-    var CHIP8_MEMORY = 0x1000;
+    const CHIP8_MEMORY = 0x1000;
 
     /**
      * Number of registers
      * @type {number}
      */
-    var CHIP8_REGISTERS = 16;
+    const CHIP8_REGISTERS = 16;
 
     /**
      * Level of the stack
      * @type {number}
      */
-    var CHIP8_STACK_LEVELS = 16;
+    const CHIP8_STACK_LEVELS = 16;
 
-    var CHIP8_WIDTH = 64;
-    var CHIP8_HEIGHT = 32;
+    const CHIP8_WIDTH = 64;
+    const CHIP8_HEIGHT = 32;
 
     /**
      * FONT SET of the Chip8
      * @type {number[]}
      */
-    var FONT_SET= [
+    const FONT_SET= [
         0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
         0x20, 0x60, 0x20, 0x20, 0x70, // 1
         0xF0, 0x10, 0xF0, 0x80, 0xF0, // 2
@@ -160,7 +160,14 @@ var Chip8 = function Chip8(){
         },
 
         setRenderer : function setRenderer(renderer) {
-            rendererChip = renderer;
+            if((typeof renderer.clear == "function") &&
+                (typeof renderer.render == "function") &&)
+                (typeof renderer.beep == "function")){
+                rendererChip = renderer;
+            }
+            else
+                throw console.error("The given renderer does not have one or"+
+                    " more of these 3 function : clear, render(display), beep");
         },
 
         /**
@@ -188,25 +195,23 @@ var Chip8 = function Chip8(){
 
         reset : reset,
 
-        start : function () {
+        start : function (canvas) {
 
             if(rendererChip == null){
-                throw new Error('You must specify a renderer.');
+                if(canvas != null){
+                    rendererChip = require('../src/renderer')(canvas, CHIP8_WIDTH, CHIP8_HEIGHT);
+                } else {
+                    throw new Error('You must specify a renderer.');
+                }
             }
 
             running = true;
             var self = this;
 
-            var lastLoop = new Date;
-
             requestAnimationFrame(function draw() {
-                //Refresh the FPS
-                var thisLoop = new Date;
-                document.getElementById('fps').innerHTML = (1000 / (thisLoop - lastLoop)) + '';
-                lastLoop = thisLoop;
 
                 //Emulate 16 cycle of the chip8
-                for(var i = 0; i<16; i++){
+                for(var i = 0; i<18; i++){
                     if(running){
                         self.emulateCycle();
                     }
@@ -588,4 +593,6 @@ var Chip8 = function Chip8(){
             }
         }
     };
-}();
+};
+
+module.exports = Chip8;

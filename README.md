@@ -2,10 +2,10 @@
 
 *A Chip8 emulator written in Javascript*
 
-* (Start the emulator)[#start_emulator]
-* (Chip8 Functions)[#chip8_functions]
-* (Renderer)[#renderer]
-* (Keyboard)[#keyboard]
+* [Start the emulator](#start_emulator)
+* [Chip8 Functions](#chip8_functions)
+* [Renderer](#renderer)
+* [Keyboard](#keyboard)
 
 
 ## <a name="start_emulator"></a> Start the emulator
